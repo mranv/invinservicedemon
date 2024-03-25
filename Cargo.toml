@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "This Rust code checks the installation status of osquery, Wazuh, and ClamAV services and generates JSON data representing their status. It's useful for applications needing to display service status information."
 license = "MIT"
+authors = ["Anubhav Gain <iamanubhavgain@gmail.com>"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -25,9 +26,23 @@ buildflags = ["--release"]
 
 [package.metadata.rpm.targets]
 invinservicedemon = { path = "/usr/bin/invinservicedemon" }
+invinservicedemon_service = { path = "/lib/systemd/system/invinservicedemon.service" }
 
 [package.metadata.rpm.files]
-"invinservicedemon.service" = { path = "/lib/systemd/system/invinservicedemon.service", mode = "644" }
+invinservicedemon_service = { path = ".rpm/invinservicedemon.service" }  # Update the path here
+invinservicedemon = { path = "target/release/invinservicedemon" }
+
+[package.metadata.generate-rpm]
+name = "invinservicedemon"  # Example: specify the package name
+version = "0.1.0"  # Example: specify the package version
+license = "MIT"  # Example: specify the package license
+summary = "A Rust service checker"  # Example: specify the package summary
+url = "https://github.com/mranv/invinservicedemon"  # Example: specify the package homepage URL
+
+[[package.metadata.generate-rpm.assets]]
+source = "target/release/invinservicedemon"  # Example: specify the location of the binary file
+dest = "/usr/bin/invinservicedemon"  # Example: specify the install destination
+mode = "755"  # Example: specify the permissions
 
 
 [package.metadata.deb]
@@ -36,7 +51,7 @@ extended-description = """\
 This Rust code checks the installation status of osquery, Wazuh, and ClamAV services and generates JSON data representing their status. It's useful for applications needing to display service status information."""
 priority = "optional"
 section = "net"
-depends = "$auto"
+depends = "libc6 (>= 2.31), libssl1.1 (>= 1.1.1)"
 conf-files = ["/etc/invinservicedemon/config.yaml", "/etc/invinservicedemon/host.key", "/etc/invinservicedemon/.daemonaddr"]
 maintainer-scripts="assets/debian"
 assets = [

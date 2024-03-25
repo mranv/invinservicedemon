@@ -1,0 +1,15 @@
+[Unit]
+Description=The Invinservicedemon repository contains a Rust project for a service helper tool that checks the installation status of various services such as osquery, Wazuh, and ClamAV. 
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+RestartSec=1
+ExecStart=/usr/bin/invinservicedemon
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+
+
