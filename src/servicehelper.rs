@@ -1,7 +1,6 @@
 use std::process::Command;
-use serde_json::Value;
-use serde_json::json;
-use tokio::time::{sleep, Duration};
+use serde_json::{json, Value};
+use log::info;
 
 pub struct ServiceHelper;
 
@@ -10,10 +9,10 @@ impl ServiceHelper {
         loop {
             // Run service checks
             let menu_item_data = self.get_menu_item_data().await;
-            println!("{}", serde_json::to_string_pretty(&menu_item_data).unwrap());
+            info!("{}", serde_json::to_string_pretty(&menu_item_data).unwrap());
 
             // Wait for 10 seconds before running the checks again
-            sleep(Duration::from_secs(10)).await;
+            tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
         }
     }
 
