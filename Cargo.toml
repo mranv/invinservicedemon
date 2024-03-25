@@ -2,6 +2,8 @@
 name = "invinservicedemon"
 version = "0.1.0"
 edition = "2021"
+description = "This Rust code checks the installation status of osquery, Wazuh, and ClamAV services and generates JSON data representing their status. It's useful for applications needing to display service status information."
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,3 +14,34 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 syslog = "6.1.0"
 tokio = { version = "1", features = ["full"] }
+
+[package.metadata.rpm]
+maintainer = "Anubhav Gain <iamanubhavgain@gmail.com>"
+homepage = "https://github.com/mranv/invinservicedemon"
+target = ["x86_64-unknown-linux-gnu"]
+
+[package.metadata.rpm.cargo]
+buildflags = ["--release"]
+
+[package.metadata.rpm.targets]
+invinservicedemon = { path = "/usr/bin/invinservicedemon" }
+
+[package.metadata.rpm.files]
+"invinservicedemon.service" = { path = "/lib/systemd/system/invinservicedemon.service", mode = "644" }
+
+
+[package.metadata.deb]
+name = "invinservicedemon"
+extended-description = """\
+This Rust code checks the installation status of osquery, Wazuh, and ClamAV services and generates JSON data representing their status. It's useful for applications needing to display service status information."""
+priority = "optional"
+section = "net"
+depends = "$auto"
+conf-files = ["/etc/invinservicedemon/config.yaml", "/etc/invinservicedemon/host.key", "/etc/invinservicedemon/.daemonaddr"]
+maintainer-scripts="assets/debian"
+assets = [
+    ["assets/invinservicedemon.service", "/lib/systemd/system/invinservicedemon.service", "644"],
+    ["assets/empty.config.yaml", "/etc/invinservicedemon/config.yaml", "644"],
+    ["assets/empty.key", "/etc/invinservicedemon/host.key", "600"],
+    ["target/release/invinservicedemon", "/usr/bin/", "755"]
+]
