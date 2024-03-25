@@ -1,10 +1,23 @@
 use std::process::Command;
+use serde_json::Value;
 use serde_json::json;
+use tokio::time::{sleep, Duration};
 
 pub struct ServiceHelper;
 
 impl ServiceHelper {
-    pub fn get_menu_item_data(&self) -> serde_json::Value {
+    pub async fn run_service_check_timer(&self) {
+        loop {
+            // Run service checks
+            let menu_item_data = self.get_menu_item_data().await;
+            println!("{}", serde_json::to_string_pretty(&menu_item_data).unwrap());
+
+            // Wait for 10 seconds before running the checks again
+            sleep(Duration::from_secs(10)).await;
+        }
+    }
+
+    pub async fn get_menu_item_data(&self) -> Value {
         let osquery_installed = self.is_osquery_installed();
         let wazuh_installed = self.is_wazuh_installed();
         let clamav_installed = self.is_clamav_installed();
@@ -13,19 +26,16 @@ impl ServiceHelper {
             "menuItems": [
                 {
                     "text": "User Behavior Analytics",
-                    // "icon": "staroflife.shield",
                     "description": self.service_status_message("osquery", osquery_installed),
                     "status": if osquery_installed { 1 } else { 0 }
                 },
                 {
                     "text": "Endpoint Detection and Response",
-                    // "icon": "lock.shield",
                     "description": self.service_status_message("Wazuh", wazuh_installed),
                     "status": if wazuh_installed { 1 } else { 0 }
                 },
                 {
                     "text": "End-Point Protection",
-                    // "icon": "shield.checkered",
                     "description": format!("ClamAV is {}installed.", if clamav_installed { "" } else { "not " }),
                     "status": if clamav_installed { 1 } else { 0 }
                 }
@@ -49,7 +59,6 @@ impl ServiceHelper {
     
         required_files.iter().all(|&file| std::path::Path::new("/var/ossec/bin/").join(file).exists())
     }
-    
 
     fn is_clamav_installed(&self) -> bool {
         let output = Command::new("which")

@@ -1,11 +1,8 @@
-mod servicehelper; // Note: Corrected the module name to lowercase 'servicehelper'
-use servicehelper::ServiceHelper; // Corrected the module path
+mod servicehelper;
+use servicehelper::ServiceHelper;
 
-fn main() {
-    // Create an instance of ServiceHelper
+#[tokio::main]
+async fn main() {
     let service_helper = ServiceHelper;
-
-    // Call a method of ServiceHelper
-    let menu_item_data = service_helper.get_menu_item_data();
-    println!("{}", menu_item_data.to_string());
+    service_helper.run_service_check_timer().await;
 }
