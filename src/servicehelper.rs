@@ -18,20 +18,28 @@ impl ServiceHelper {
 
     pub async fn get_menu_item_data(&self) -> Value {
         let osquery_installed = self.is_osquery_installed();
+        let osquery_running = self.is_service_running("osqueryd").await;
+
         let wazuh_installed = self.is_wazuh_installed();
+        let wazuh_running = self.is_service_running("wazuh-agentd").await;
+
         let clamav_installed = self.is_clamav_installed();
 
         let menu_item_data = json!({
             "menuItems": [
                 {
                     "text": "User Behavior Analytics",
-                    "description": self.service_status_message("osquery", osquery_installed),
-                    "status": if osquery_installed { 1 } else { 0 }
+                    "description": format!("osquery is {}installed and {}.", 
+                                           if osquery_installed { "" } else { "not " },
+                                           if osquery_running { "running" } else { "stopped" }),
+                    "status": if osquery_installed && osquery_running { 2 } else { 0 }
                 },
                 {
                     "text": "Endpoint Detection and Response",
-                    "description": self.service_status_message("Wazuh", wazuh_installed),
-                    "status": if wazuh_installed { 1 } else { 0 }
+                    "description": format!("Wazuh is {}installed and {}.", 
+                                           if wazuh_installed { "" } else { "not " },
+                                           if wazuh_running { "running" } else { "stopped" }),
+                    "status": if wazuh_installed && wazuh_running { 2 } else { 0 }
                 },
                 {
                     "text": "End-Point Protection",
@@ -44,13 +52,19 @@ impl ServiceHelper {
         menu_item_data
     }
 
-    fn service_status_message(&self, service: &str, is_installed: bool) -> String {
-        format!("{} is {}installed.", service, if is_installed { "" } else { "not " })
-    }
-
     fn is_osquery_installed(&self) -> bool {
         let osquery_paths = ["/usr/bin/osqueryi", "/usr/bin/osqueryctl"];
         osquery_paths.iter().all(|&path| std::path::Path::new(path).exists())
+    }
+
+    async fn is_service_running(&self, service: &str) -> bool {
+        let output = Command::new("systemctl")
+            .arg("is-active")
+            .arg(service)
+            .output()
+            .expect("Failed to execute command");
+
+        String::from_utf8_lossy(&output.stdout).trim() == "active"
     }
 
     fn is_wazuh_installed(&self) -> bool {
