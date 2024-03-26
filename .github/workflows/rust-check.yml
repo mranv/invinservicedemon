@@ -33,9 +33,10 @@ jobs:
         cargo install cargo-deb
         cargo deb
 
-    # Build RPM package
+     # Build RPM package
     - name: Build RPM package
       run: |
-        sudo yum install -y rpmdevtools
+        sudo apt update
+        sudo apt install -y rpmdevtools
         cargo install cargo-rpm
         cargo rpm build
