@@ -37,6 +37,6 @@ jobs:
     - name: Build RPM package
       run: |
         sudo apt update
-        sudo apt install -y rpmdevtools
+        sudo apt install -y rpm*
         cargo install cargo-rpm
         cargo rpm build
