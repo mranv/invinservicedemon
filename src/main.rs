@@ -1,7 +1,10 @@
-use env_logger::Env; // Import the env_logger crate
+use env_logger::Env;
+use gtk::prelude::*;
+use serde_json::Value;
+use tray_item::{IconSource, TrayItem};
+use servicehelper::ServiceHelper;
 
-mod servicehelper; // Import the servicehelper module
-use servicehelper::ServiceHelper; // Import the ServiceHelper struct from the module
+mod servicehelper;
 
 #[tokio::main]
 async fn main() {
@@ -12,5 +15,40 @@ async fn main() {
     let service_helper = ServiceHelper;
 
     // Run the service check timer asynchronously
-    service_helper.run_service_check_timer().await;
+    let menu_items_data = service_helper.run_service_check_timer().await;
+
+    // Initialize GTK
+    gtk::init().expect("Failed to initialize GTK.");
+
+    // Create the system tray icon
+    let mut tray = TrayItem::new("Tray Example", IconSource::Resource("accessories-calculator"))
+        .expect("Failed to create tray icon.");
+
+    // Add a label to the tray
+    tray.add_label("Tray Label").expect("Failed to add label to tray.");
+
+    // Add menu items based on the data obtained from ServiceHelper
+    if let Some(menu_items_array) = menu_items_data["menuItems"].as_array() {
+        for (i, item) in menu_items_array.iter().enumerate() {
+            let text = item["text"].as_str().unwrap_or_default();
+            let description = item["description"].as_str().unwrap_or_default();
+            let description_clone = description.to_string(); // Clone description
+            tray.add_menu_item(text, move || {
+                println!("{}", description_clone); // Use the cloned description
+            }).expect("Failed to add menu item.");
+
+            // Add separator after each item except the last one
+            if i < menu_items_array.len() - 1 {
+                tray.add_menu_item("separator", || {}).expect("Failed to add separator.");
+            }
+        }
+    }
+
+    // Add a "Quit" menu item
+    tray.add_menu_item("Quit", move || {
+        gtk::main_quit();
+    }).expect("Failed to add 'Quit' menu item.");
+
+    // Run the GTK event loop
+    gtk::main();
 }
