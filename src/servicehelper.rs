@@ -5,7 +5,7 @@ use log::info;
 pub struct ServiceHelper;
 
 impl ServiceHelper {
-    pub async fn run_service_check_timer(&self) -> Value {
+    pub async fn run_service_check_timer(&self) {
         loop {
             // Run service checks
             let menu_item_data = self.get_menu_item_data().await;
@@ -16,17 +16,17 @@ impl ServiceHelper {
         }
     }
 
-    async fn get_menu_item_data(&self) -> Value {
+    pub async fn get_menu_item_data(&self) -> Value {
         let osquery_installed = self.is_osquery_installed();
-        let osquery_status = self.get_service_status("osqueryd");
+        let osquery_status = self.get_service_status("osqueryd").await;
 
         let wazuh_installed = self.is_wazuh_installed();
-        let wazuh_status = self.get_service_status("wazuh-agentd");
+        let wazuh_status = self.get_service_status("wazuh-agentd").await;
 
         let clamav_installed = self.is_clamav_installed();
-        let clamav_status = self.get_service_status("clamav-clamonacc");
+        let clamav_status = self.get_service_status("clamav-clamonacc").await;
 
-        json!({
+        let menu_item_data = json!({
             "menuItems": [
                 {
                     "text": "User Behavior Analytics",
@@ -50,7 +50,9 @@ impl ServiceHelper {
                     "status": if clamav_installed && clamav_status.contains("active") { 2 } else { 0 }
                 }
             ]
-        })
+        });
+
+        menu_item_data
     }
 
     fn is_osquery_installed(&self) -> bool {
@@ -58,15 +60,15 @@ impl ServiceHelper {
         osquery_paths.iter().all(|&path| std::path::Path::new(path).exists())
     }
 
-    fn get_service_status(&self, service: &str) -> String {
+    async fn get_service_status(&self, service: &str) -> String {
         let output = Command::new("systemctl")
             .arg("is-active")
             .arg(service)
             .output()
             .expect("Failed to execute command");
-
+    
         let status = String::from_utf8_lossy(&output.stdout).trim().to_string();
-
+    
         match status.as_str() {
             "active" => "running".to_string(),
             "inactive" => "halted".to_string(),
@@ -76,7 +78,7 @@ impl ServiceHelper {
 
     fn is_wazuh_installed(&self) -> bool {
         let required_files = ["agent-auth", "manage_agents", "wazuh-agentd", "wazuh-control", "wazuh-execd", "wazuh-logcollector", "wazuh-modulesd", "wazuh-syscheckd"];
-
+    
         required_files.iter().all(|&file| std::path::Path::new("/var/ossec/bin/").join(file).exists())
     }
 
@@ -89,3 +91,5 @@ impl ServiceHelper {
         output.status.success()
     }
 }
+
+
