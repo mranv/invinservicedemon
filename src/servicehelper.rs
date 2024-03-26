@@ -24,7 +24,7 @@ impl ServiceHelper {
         let wazuh_status = self.get_service_status("wazuh-agentd").await;
 
         let clamav_installed = self.is_clamav_installed();
-        let clamav_status = self.get_service_status(" clamav-clamonacc").await;
+        let clamav_status = self.get_service_status("clamav-clamonacc").await;
 
         let menu_item_data = json!({
             "menuItems": [
@@ -75,8 +75,6 @@ impl ServiceHelper {
             "activating" | "deactivating" | "failed" | _ => "stopped".to_string(),
         }
     }
-    
-    
 
     fn is_wazuh_installed(&self) -> bool {
         let required_files = ["agent-auth", "manage_agents", "wazuh-agentd", "wazuh-control", "wazuh-execd", "wazuh-logcollector", "wazuh-modulesd", "wazuh-syscheckd"];
@@ -93,3 +91,5 @@ impl ServiceHelper {
         output.status.success()
     }
 }
+
+
