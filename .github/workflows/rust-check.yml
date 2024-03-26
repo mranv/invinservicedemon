@@ -38,5 +38,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y rpm*
-        cargo install cargo-rpm
-        cargo rpm build
+        cargo install cargo-generate-rpm
+        cargo build --release
+        strip -s target/release/invinservicedemon
+        cargo generate-rpm
