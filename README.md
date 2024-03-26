@@ -1,4 +1,4 @@
-# Invinservicedemon
+# [![Rust](https://github.com/mranv/invinservicedemon/actions/workflows/rust-check.yml/badge.svg)](https://github.com/mranv/invinservicedemon/actions/workflows/rust-check.yml) invinservicedemon 
 
 ## Description
 The Invinservicedemon repository contains a Rust project for a service helper tool that checks the installation status of various services such as osquery, Wazuh, and ClamAV. It provides a struct called `ServiceHelper` with methods to gather information about installed services and their status.
