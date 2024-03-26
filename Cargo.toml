@@ -51,7 +51,7 @@ extended-description = """\
 This Rust code checks the installation status of osquery, Wazuh, and ClamAV services and generates JSON data representing their status. It's useful for applications needing to display service status information."""
 priority = "optional"
 section = "net"
-depends = "libc6 (>= 2.31), libssl1.1 (>= 1.1.1)"
+depends = "libc6 (>= 2.31), libssl3"
 conf-files = ["/etc/invinservicedemon/config.yaml", "/etc/invinservicedemon/host.key", "/etc/invinservicedemon/.daemonaddr"]
 maintainer-scripts="assets/debian"
 assets = [
