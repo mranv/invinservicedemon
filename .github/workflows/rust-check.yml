@@ -1,0 +1,41 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    # Build your Rust code
+    - name: Build
+      run: cargo build --verbose
+
+    # Run tests
+    - name: Run tests
+      run: cargo test --verbose
+
+    # Build Debian package
+    - name: Build Debian package
+      run: |
+        sudo apt update
+        sudo apt install -y build-essential
+        cargo install cargo-deb
+        cargo deb
+
+    # Build RPM package
+    - name: Build RPM package
+      run: |
+        sudo yum install -y rpmdevtools
+        cargo install cargo-rpm
+        cargo rpm build
