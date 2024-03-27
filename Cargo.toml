@@ -41,7 +41,7 @@ url = "https://github.com/mranv/invinservicedemon"  # Example: specify the packa
 
 [[package.metadata.generate-rpm.assets]]
 source = "target/release/invinservicedemon"  # Example: specify the location of the binary file
-dest = "/usr/bin/invinservicedemon"  # Example: specify the install destination
+dest = "/sbin/invinservicedemon"  # Example: specify the install destination
 mode = "755"  # Example: specify the permissions
 
 
