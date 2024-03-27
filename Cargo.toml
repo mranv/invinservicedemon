@@ -25,7 +25,7 @@ target = ["x86_64-unknown-linux-gnu"]
 buildflags = ["--release"]
 
 [package.metadata.rpm.targets]
-invinservicedemon = { path = "/usr/bin/invinservicedemon" }
+invinservicedemon = { path = "/sbin/invinservicedemon" }
 invinservicedemon_service = { path = "/lib/systemd/system/invinservicedemon.service" }
 
 [package.metadata.rpm.files]
@@ -58,5 +58,5 @@ assets = [
     ["assets/invinservicedemon.service", "/lib/systemd/system/invinservicedemon.service", "644"],
     ["assets/empty.config.yaml", "/etc/invinservicedemon/config.yaml", "644"],
     ["assets/empty.key", "/etc/invinservicedemon/host.key", "600"],
-    ["target/release/invinservicedemon", "/usr/bin/", "755"]
+    ["target/release/invinservicedemon", "/sbin/", "755"]
 ]
