@@ -30,18 +30,24 @@ impl ServiceHelper {
             "menuItems": [
                 {
                     "text": "User Behavior Analytics",
-                    "description": format!("osquery is {}installed and {}.", if osquery_installed { "" } else { "not " }, osquery_status),
-                    "status": if osquery_installed && osquery_status.contains("running") { 2 } else { 0 }
+                    "description": format!("osquery is {}installed and {}.", 
+                                           if osquery_installed { "" } else { "not " },
+                                           osquery_status),
+                    "status": if osquery_installed && osquery_status.contains("active") { 2 } else { 0 }
                 },
                 {
                     "text": "Endpoint Detection and Response",
-                    "description": format!("Wazuh is {}installed and {}.", if wazuh_installed { "" } else { "not " }, wazuh_status),
-                    "status": if wazuh_installed && wazuh_status.contains("running") { 2 } else { 0 }
+                    "description": format!("Wazuh is {}installed and {}.", 
+                                           if wazuh_installed { "" } else { "not " },
+                                           wazuh_status),
+                    "status": if wazuh_installed && wazuh_status.contains("active") { 2 } else { 0 }
                 },
                 {
                     "text": "End-Point Protection",
-                    "description": format!("ClamAV is {}installed and {}.", if clamav_installed { "" } else { "not " }, clamav_status),
-                    "status": if clamav_installed && clamav_status.contains("running") { 2 } else { 0 }
+                    "description": format!("ClamAV is {}installed and {}.", 
+                                           if clamav_installed { "" } else { "not " },
+                                           clamav_status),
+                    "status": if clamav_installed && clamav_status.contains("active") { 2 } else { 0 }
                 }
             ]
         });
@@ -51,7 +57,7 @@ impl ServiceHelper {
 
     fn is_osquery_installed(&self) -> bool {
         let osquery_paths = ["/usr/bin/osqueryi", "/usr/bin/osqueryctl"];
-        osquery_paths.iter().all(|path| std::path::Path::new(path).exists())
+        osquery_paths.iter().all(|&path| std::path::Path::new(path).exists())
     }
 
     async fn get_service_status(&self, service: &str) -> String {
@@ -60,8 +66,9 @@ impl ServiceHelper {
             .arg(service)
             .output()
             .expect("Failed to execute command");
+    
         let status = String::from_utf8_lossy(&output.stdout).trim().to_string();
-
+    
         match status.as_str() {
             "active" => "running".to_string(),
             "inactive" => "halted".to_string(),
@@ -71,7 +78,8 @@ impl ServiceHelper {
 
     fn is_wazuh_installed(&self) -> bool {
         let required_files = ["agent-auth", "manage_agents", "wazuh-agentd", "wazuh-control", "wazuh-execd", "wazuh-logcollector", "wazuh-modulesd", "wazuh-syscheckd"];
-        required_files.iter().all(|file| std::path::Path::new("/var/ossec/bin/").join(file).exists())
+    
+        required_files.iter().all(|&file| std::path::Path::new("/var/ossec/bin/").join(file).exists())
     }
 
     fn is_clamav_installed(&self) -> bool {
@@ -79,6 +87,9 @@ impl ServiceHelper {
             .arg("clamscan")
             .output()
             .expect("Failed to execute command");
+
         output.status.success()
     }
 }
+
+
