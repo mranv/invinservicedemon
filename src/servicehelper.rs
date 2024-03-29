@@ -63,7 +63,7 @@ impl ServiceHelper {
                 println!("{}", menu_item_data);
             }
 
-            tokio::time::sleep(std::time::Duration::from_secs(10)).await;
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
         }
     }
 
@@ -118,19 +118,19 @@ async fn get_menu_item_data(
             osquery_string,
             osquery_status
         ),
-        if osquery_installed { 2 } else { 1 },
+        if !osquery_installed { "0" } else { if osquery_status == "halted" { "0" } else { "1" } },
         format!(
             "Wazuh is {} and {}.",
             wazuh_string,
             wazuh_status
         ),
-        if wazuh_installed { 2 } else { 1 },
+        if !wazuh_installed { "0" } else { if wazuh_status == "halted" { "0" } else { "1" } },
         format!(
             "ClamAV is {} and {}.",
             clamav_string,
             clamav_status
         ),
-        if clamav_installed { 2 } else { 1 },
+        if !clamav_installed { "0" } else { if clamav_status == "halted" { "0" } else { "1" } },
     )
 }
 
@@ -144,8 +144,8 @@ async fn get_service_status(service: &str) -> String {
     let status = String::from_utf8_lossy(&output.stdout).trim().to_string();
 
     match status.as_str() {
-        "active" => "running".to_string(),
-        "inactive" => "halted".to_string(),
+        "active" => Color::Green.paint("running").to_string(),
+        "inactive" => Color::Yellow.paint("halted").to_string(),
         "activating" | "deactivating" | "failed" | _ => "stopped".to_string(),
     }
 }
