@@ -61,7 +61,9 @@ cargo deb
 ```bash
 cargo generate-rpm
 ```
-
+```bash
+cargo build --release && strip -s target/release/invinservicedemon && cargo deb && cargo generate-rpm
+```
 Please ensure to strip debug symbols and build the release version (`--release`) before generating packages.
 
 ## Dependencies
