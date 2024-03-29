@@ -2,6 +2,7 @@ use std::process::Command;
 use serde_json::{json, Value};
 use log::info;
 use tokio::sync::mpsc::{self, Receiver};
+use tokio::time::{interval, Duration};
 
 pub struct ServiceHelper {
     // Track previous states of services
@@ -24,6 +25,9 @@ impl ServiceHelper {
             let mut osquery_prev_status = String::new();
             let mut wazuh_prev_status = String::new();
             let mut clamav_prev_status = String::new();
+
+            // Create a timer with 10-second intervals
+            let mut interval = interval(Duration::from_secs(10));
 
             loop {
                 // Check for changes in service status
@@ -55,7 +59,8 @@ impl ServiceHelper {
                     }
                 }
 
-                // No explicit sleep here
+                // Wait for the next interval
+                interval.tick().await;
             }
         });
 
@@ -85,7 +90,7 @@ impl ServiceHelper {
     }
 }
 
-pub async fn get_menu_item_data(osquery_installed: bool, wazuh_installed: bool, clamav_installed: bool, osquery_status: String, wazuh_status: String, clamav_status: String) -> Value {
+async fn get_menu_item_data(osquery_installed: bool, wazuh_installed: bool, clamav_installed: bool, osquery_status: String, wazuh_status: String, clamav_status: String) -> Value {
     let menu_item_data = json!({
         "menuItems": [
             {
