@@ -1,3 +1,4 @@
+// src/servicehelper.rs
 use std::process::Command;
 use ansi_term::Color;
 
@@ -13,19 +14,15 @@ impl ServiceHelper {
         let wazuh_installed = self.is_wazuh_installed();
         let clamav_installed = self.is_clamav_installed();
 
-        let mut osquery_status = String::new();
-        let mut wazuh_status = String::new();
-        let mut clamav_status = String::new();
-
         loop {
             let new_osquery_status = get_service_status("osqueryd").await;
             let new_wazuh_status = get_service_status("wazuh-agentd").await;
             let new_clamav_status = get_service_status("clamav-clamonacc").await;
 
-            if new_osquery_status != osquery_status || new_wazuh_status != wazuh_status || new_clamav_status != clamav_status {
-                osquery_status = new_osquery_status.clone();
-                wazuh_status = new_wazuh_status.clone();
-                clamav_status = new_clamav_status.clone();
+            if new_osquery_status != self.osquery_prev_status || new_wazuh_status != self.wazuh_prev_status || new_clamav_status != self.clamav_prev_status {
+                self.osquery_prev_status = new_osquery_status.clone();
+                self.wazuh_prev_status = new_wazuh_status.clone();
+                self.clamav_prev_status = new_clamav_status.clone();
 
                 let osquery_color = if osquery_installed { Color::Green } else { Color::Red };
                 let wazuh_color = if wazuh_installed { Color::Green } else { Color::Red };
@@ -53,9 +50,9 @@ impl ServiceHelper {
                     osquery_installed,
                     wazuh_installed,
                     clamav_installed,
-                    osquery_status.clone(),
-                    wazuh_status.clone(),
-                    clamav_status.clone(),
+                    new_osquery_status.clone(),
+                    new_wazuh_status.clone(),
+                    new_clamav_status.clone(),
                     osquery_string,
                     wazuh_string,
                     clamav_string,
@@ -65,6 +62,46 @@ impl ServiceHelper {
 
             tokio::time::sleep(std::time::Duration::from_secs(2)).await;
         }
+    }
+
+    pub async fn get_menu_item_data(&self) -> String {
+        let osquery_installed = self.is_osquery_installed();
+        let wazuh_installed = self.is_wazuh_installed();
+        let clamav_installed = self.is_clamav_installed();
+
+        let osquery_color = if osquery_installed { Color::Green } else { Color::Red };
+        let wazuh_color = if wazuh_installed { Color::Green } else { Color::Red };
+        let clamav_color = if clamav_installed { Color::Green } else { Color::Red };
+
+        let mut osquery_string = String::new();
+        if !osquery_installed {
+            osquery_string.push_str("not ");
+        }
+        osquery_string.push_str(&osquery_color.paint("installed").to_string());
+
+        let mut wazuh_string = String::new();
+        if !wazuh_installed {
+            wazuh_string.push_str("not ");
+        }
+        wazuh_string.push_str(&wazuh_color.paint("installed").to_string());
+
+        let mut clamav_string = String::new();
+        if !clamav_installed {
+            clamav_string.push_str("not ");
+        }
+        clamav_string.push_str(&clamav_color.paint("installed").to_string());
+
+        get_menu_item_data(
+            osquery_installed,
+            wazuh_installed,
+            clamav_installed,
+            self.osquery_prev_status.clone(),
+            self.wazuh_prev_status.clone(),
+            self.clamav_prev_status.clone(),
+            osquery_string,
+            wazuh_string,
+            clamav_string,
+        ).await
     }
 
     fn is_osquery_installed(&self) -> bool {

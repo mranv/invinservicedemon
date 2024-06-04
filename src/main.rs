@@ -1,7 +1,10 @@
 use env_logger::{Builder, Env};
 use std::env;
 use tokio;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
+mod server;
 mod servicehelper;
 use servicehelper::ServiceHelper;
 
@@ -16,11 +19,17 @@ async fn main() {
         .target(env_logger::Target::default())
         .init();
 
-    let mut service_helper = ServiceHelper {
+    let service_helper = Arc::new(Mutex::new(ServiceHelper {
         osquery_prev_status: String::new(),
         wazuh_prev_status: String::new(),
         clamav_prev_status: String::new(),
-    };
+    }));
 
-    service_helper.run_service_check_timer().await;
+    let service_helper_clone = service_helper.clone();
+    let server_task = tokio::spawn(server::run_server(service_helper_clone));
+    let service_task = tokio::spawn(async move {
+        service_helper.lock().await.run_service_check_timer().await;
+    });
+
+    let _ = tokio::join!(server_task, service_task);
 }

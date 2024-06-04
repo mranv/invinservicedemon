@@ -1,47 +1,57 @@
-use std::net::{TcpListener, TcpStream};
-use std::io::{Read, Write, BufWriter};
+// src/server.rs
+use tokio::net::{TcpListener, TcpStream};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use crate::servicehelper::ServiceHelper;
 
 const SHARED_SECRET: &str = "secret_token";
 
-fn handle_client(mut stream: TcpStream) {
-    let mut buf = [0; 1024];
-    match stream.read(&mut buf) {
+async fn handle_client(mut stream: TcpStream, service_helper: Arc<Mutex<ServiceHelper>>) {
+    let mut buf = vec![0; 1024];
+    match stream.read(&mut buf).await {
         Ok(size) => {
             let message = String::from_utf8_lossy(&buf[..size]);
             if message.trim() == SHARED_SECRET {
                 println!("Client authenticated successfully");
-                stream.write_all(b"Authenticated\n").unwrap();
-                let mut writer = BufWriter::new(stream.try_clone().expect("Failed to clone stream"));
-                loop {
-                    writer.write_all(b"hello Anubhav\n").unwrap();
-                    writer.flush().unwrap();
-                    std::thread::sleep(std::time::Duration::from_secs(1));
+                if let Err(e) = stream.write_all(b"Authenticated\n").await {
+                    eprintln!("Failed to send authenticated response: {}", e);
+                    return;
                 }
+
+                let menu_items = {
+                    let service_helper = service_helper.lock().await;
+                    service_helper.get_menu_item_data().await
+                };
+
+                if let Err(e) = stream.write_all(menu_items.as_bytes()).await {
+                    eprintln!("Failed to send menu items: {}", e);
+                }
+
+                stream.shutdown().await.expect("Failed to shutdown the connection");
             } else {
                 println!("Unauthorized client attempted to connect");
             }
-        },
-        Err(_) => {
-            println!("Error occurred, terminating connection with client");
+        }
+        Err(e) => {
+            println!("Error occurred, terminating connection with client: {}", e);
         }
     }
 }
 
-fn main() {
-    let listener = TcpListener::bind("127.0.0.1:8088").expect("Failed to bind");
+pub async fn run_server(service_helper: Arc<Mutex<ServiceHelper>>) {
+    let listener = TcpListener::bind("127.0.0.1:8088").await.expect("Failed to bind");
     println!("Server listening on port 8088");
 
-    for stream in listener.incoming() {
-        match stream {
-            Ok(stream) => {
-                println!("New connection: {}", stream.peer_addr().unwrap());
-                let cloned_stream = stream.try_clone().expect("Failed to clone stream");
-                std::thread::spawn(move || {
-                    handle_client(cloned_stream);
-                });
+    loop {
+        match listener.accept().await {
+            Ok((stream, addr)) => {
+                println!("New connection: {}", addr);
+                let service_helper = service_helper.clone();
+                tokio::spawn(handle_client(stream, service_helper));
             }
             Err(e) => {
-                println!("Error: {}", e);
+                println!("Error accepting connection: {}", e);
             }
         }
     }
